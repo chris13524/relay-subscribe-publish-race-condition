@@ -90,7 +90,7 @@ async fn main() {
         };
 
         assert_eq!(msg.tag, 1001);
-        println!("received message from client 1: {}", msg.message);
+        info!("received message from client 1: {}", msg.message);
     })
     .await
     {
