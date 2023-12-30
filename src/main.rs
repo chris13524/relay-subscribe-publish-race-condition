@@ -28,19 +28,14 @@ async fn main() {
         .try_init()
         .ok();
 
-    let (client1, mut rx1) = create_client(
-        "wss://staging.relay.walletconnect.com".parse().unwrap(),
-        std::env::var("PROJECT_ID").unwrap().into(),
-        "http://localhost".parse().unwrap(),
-    )
-    .await;
+    let relay_url: Url = "wss://staging.relay.walletconnect.com".parse().unwrap();
+    let project_id: ProjectId = std::env::var("PROJECT_ID").unwrap().into();
+    let server_url: Url = "http://localhost".parse().unwrap();
 
-    let (client2, mut rx2) = create_client(
-        "wss://staging.relay.walletconnect.com".parse().unwrap(),
-        std::env::var("PROJECT_ID").unwrap().into(),
-        "http://localhost".parse().unwrap(),
-    )
-    .await;
+    let (client1, mut rx1) =
+        create_client(relay_url.clone(), project_id.clone(), server_url.clone()).await;
+
+    let (client2, mut rx2) = create_client(relay_url, project_id, server_url).await;
 
     let topic = Topic::generate();
 
@@ -60,7 +55,7 @@ async fn main() {
                 client1
                     .publish(
                         topic.clone(),
-                        "Hello from client 1",
+                        "Response from client 1",
                         1001,
                         Duration::from_secs(600),
                         false,
@@ -79,7 +74,7 @@ async fn main() {
     client2
         .publish(
             topic.clone(),
-            "Hello from client 2",
+            "Request from client 2",
             1000,
             Duration::from_secs(600),
             false,
@@ -87,7 +82,7 @@ async fn main() {
         .await
         .unwrap();
 
-    tokio::time::timeout(Duration::from_secs(5), async {
+    match tokio::time::timeout(Duration::from_secs(5), async {
         let event = rx2.recv().await.unwrap();
         let msg = match event {
             RelayClientEvent::Message(msg) => msg,
@@ -98,7 +93,10 @@ async fn main() {
         println!("received message from client 1: {}", msg.message);
     })
     .await
-    .unwrap();
+    {
+        Ok(_) => info!("== ✅✅✅ PASS ✅✅✅ =="),
+        Err(e) => panic!("== ❌❌❌ FAIL ❌❌❌ == {e:?}"),
+    }
 }
 
 pub async fn create_client(
