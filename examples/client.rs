@@ -20,47 +20,15 @@ async fn main() {
     let project_id: ProjectId = std::env::var("PROJECT_ID").unwrap().into();
     let server_url: Url = "http://localhost".parse().unwrap();
 
-    let (client1, mut rx1) =
-        create_client(relay_url.clone(), project_id.clone(), server_url.clone()).await;
+    let (client, mut rx) = create_client(relay_url, project_id, server_url).await;
 
-    let (client2, mut rx2) = create_client(relay_url, project_id, server_url).await;
+    let topic: Topic = "b964e2d7a9b8d3684df79f880e3973e543c53811d45b7d8e331de01cf6e98209".into();
 
-    let topic = Topic::generate();
-    info!("topic: {topic}");
+    client.subscribe(topic.clone()).await.unwrap();
 
-    client1.subscribe(topic.clone()).await.unwrap();
-    tokio::task::spawn({
-        let topic = topic.clone();
-        async move {
-            loop {
-                let event = rx1.recv().await.unwrap();
-                let msg = match event {
-                    RelayClientEvent::Message(msg) => msg,
-                    e => panic!("Expected message, got {e:?}"),
-                };
+    // tokio::time::sleep(std::time::Duration::from_secs(1)).await;
 
-                assert_eq!(msg.tag, 1000);
-                info!("responding");
-                client1
-                    .publish(
-                        topic.clone(),
-                        "Response from client 1",
-                        1001,
-                        Duration::from_secs(600),
-                        false,
-                    )
-                    .await
-                    .unwrap();
-                info!("responded");
-            }
-        }
-    });
-
-    tokio::time::sleep(Duration::from_secs(1)).await;
-
-    client2.subscribe(topic.clone()).await.unwrap();
-
-    client2
+    client
         .publish(
             topic.clone(),
             "Request from client 2",
@@ -72,7 +40,7 @@ async fn main() {
         .unwrap();
 
     match tokio::time::timeout(Duration::from_secs(5), async {
-        let event = rx2.recv().await.unwrap();
+        let event = rx.recv().await.unwrap();
         let msg = match event {
             RelayClientEvent::Message(msg) => msg,
             e => panic!("Expected message, got {e:?}"),
