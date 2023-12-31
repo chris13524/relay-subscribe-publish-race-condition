@@ -13,17 +13,13 @@ git clone https://github.com/chris13524/relay-subscribe-publish-race-condition.g
 export PROJECT_ID=xxx
 ```
 
-```bash
-while cargo run; do echo "success"; done
-```
-
-Server:
+Run server in 1 region:
 
 ```bash
 cargo run --example server
 ```
 
-Client:
+Run client in a different region:
 
 ```bash
 cargo run --example client

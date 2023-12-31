@@ -16,14 +16,14 @@ async fn main() {
         .try_init()
         .ok();
 
-    let relay_url: Url = "wss://staging.relay.walletconnect.com".parse().unwrap();
+    let relay_url: Url = "wss://relay.walletconnect.com".parse().unwrap();
     let project_id: ProjectId = std::env::var("PROJECT_ID").unwrap().into();
     let server_url: Url = "http://localhost".parse().unwrap();
 
     let (client, mut rx) =
         create_client(relay_url.clone(), project_id.clone(), server_url.clone()).await;
 
-    let topic: Topic = "b964e2d7a9b8d3684df79f880e3973e543c53811d45b7d8e331de01cf6e98209".into();
+    let topic: Topic = "b964e2d7a9b8d3684df79f880e3973e543c53811d45b7d8e331de01cf6e98211".into();
 
     client.subscribe(topic.clone()).await.unwrap();
     loop {
